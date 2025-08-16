@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>名字问候系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c 0%, #2c3e50 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #f5f7fa;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 10% 20%, rgba(255, 200, 124, 0.05) 0%, rgba(255, 200, 124, 0) 30%);
+            pointer-events: none;
+        }
+        
+        .container {
+            max-width: 600px;
+            width: 90%;
+            background: rgba(25, 35, 60, 0.85);
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            padding: 40px;
+            backdrop-filter: blur(8px);
+            position: relative;
+            z-index: 10;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s ease;
+        }
+        
+        .container.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .main-card {
+            background: rgba(30, 40, 70, 0.7);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        
+        .input-group {
+            margin-bottom: 25px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 12px;
+            font-weight: 500;
+            color: #f5f7fa;
+            font-size: 1.1rem;
+        }
+        
+        .input-container {
+            display: flex;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .input-container:focus-within {
+            box-shadow: 0 0 0 3px rgba(255, 126, 95, 0.3);
+        }
+        
+        .input-container i {
+            background: linear-gradient(90deg, #2c3e50, #1a2a6c);
+            color: #ff7e5f;
+            padding: 15px 20px;
+            font-size: 1.2rem;
+            min-width: 55px;
+            text-align: center;
+        }
+        
+        .input-container input {
+            flex: 1;
+            border: none;
+            padding: 15px;
+            font-size: 1.1rem;
+            outline: none;
+            background: rgba(20, 30, 50, 0.8);
+            color: #f5f7fa;
+        }
+        
+        .input-container input::placeholder {
+            color: rgba(200, 200, 200, 0.5);
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(90deg, #ff7e5f, #feb47b);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(255, 126, 95, 0.4);
+            letter-spacing: 1px;
+            margin-top: 20px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 126, 95, 0.6);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .info-section {
+            background: rgba(20, 30, 50, 0.6);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 25px;
+            border-left: 3px solid #ff7e5f;
+            font-size: 0.95rem;
+        }
+        
+        .info-section ul {
+            padding-left: 20px;
+        }
+        
+        .info-section li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.8);
+        }
+        
+        .response-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 15, 30, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .response-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #1a2a6c 0%, #2c3e50 100%);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            max-width: 700px;
+            width: 90%;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .modal-content h2 {
+            font-size: 2rem;
+            margin-bottom: 25px;
+            color: #feb47b;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        
+        .modal-message {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            margin-bottom: 30px;
+            min-height: 200px;
+            text-align: left;
+            padding: 20px;
+            background: rgba(20, 30, 50, 0.5);
+            border-radius: 10px;
+            border-left: 3px solid #ff7e5f;
+            color: rgba(255, 255, 255, 0.9);
+            position: relative;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s ease;
+        }
+        
+        .modal-message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        
+        .modal-close:hover {
+            color: #ff7e5f;
+        }
+        
+        .modal-btn {
+            display: inline-block;
+            padding: 12px 35px;
+            background: linear-gradient(90deg, #ff7e5f, #feb47b);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+        
+        .modal-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(255, 126, 95, 0.4);
+        }
+        
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a2a6c;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+        
+        .loader.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .loader-text {
+            font-size: 2rem;
+            color: #feb47b;
+            margin-bottom: 30px;
+            text-align: center;
+            position: relative;
+            animation: fadeInOut 2s infinite;
+        }
+        
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: #ff7e5f;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+            .container { padding: 25px; }
+            .main-card { padding: 20px; }
+            .modal-content { padding: 30px; }
+            .loader-text { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="loader" id="loader">
+        <div class="loader-text">你好，我在寻找一个人</div>
+        <div class="spinner"></div>
+    </div>
+    
+    <div class="container" id="main-container">
+        <div class="main-card">
+            <div class="input-group">
+                <label for="name-input"><i class="fas fa-user-circle"></i> 请输入您的名字缩写</label>
+                <div class="input-container">
+                    <i class="fas fa-signature"></i>
+                    <input type="text" id="name-input" placeholder="输入2-4个英文字母" maxlength="4">
+                </div>
+            </div>
+            
+            <button id="submit-btn" class="btn">
+                <i class="fas fa-paper-plane"></i> 获取问候
+            </button>
+            
+            <div class="info-section">
+                <h3><i class="fas fa-shield-alt"></i> 隐私与安全</h3>
+                <ul>
+                    <li>所有处理均在您的设备本地完成，无数据上传</li>
+                    <li>不会收集或存储您的任何个人信息</li>
+                    <li>本页面不会执行任何违法或恶意操作</li>
+                    <li>关闭页面后所有临时数据将被清除</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <div class="response-modal" id="response-modal">
+        <div class="modal-content">
+            <button class="modal-close" id="close-modal">
+                <i class="fas fa-times"></i>
+            </button>
+            <h2 id="modal-title">问候</h2>
+            <div class="modal-message" id="modal-message"></div>
+            <button class="modal-btn" id="modal-ok">确定</button>
+        </div>
+    </div>
+    
+    <div class="response-modal" id="birthday-modal">
+        <div class="modal-content">
+            <button class="modal-close" id="close-birthday-modal">
+                <i class="fas fa-times"></i>
+            </button>
+            <h2>验证身份</h2>
+            <p style="margin-bottom: 20px; color: rgba(255, 255, 255, 0.8);">你的生日是？（月.日）</p>
+            
+            <div class="input-group">
+                <div class="input-container">
+                    <i class="fas fa-calendar-alt"></i>
+                    <input type="text" id="birthday-input" placeholder="请输入生日日期">
+                </div>
+            </div>
+            
+            <button class="modal-btn" id="submit-birthday">
+                <i class="fas fa-check"></i> 验证
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 修复：确保加载完成后显示主界面
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                const loader = document.getElementById('loader');
+                const container = document.getElementById('main-container');
+                
+                loader.classList.add('hidden');
+                
+                // 显示主容器
+                setTimeout(function() {
+                    container.classList.add('show');
+                    document.getElementById('name-input').focus();
+                }, 300);
+            }, 1500);
+        });
+        
+        // 获取DOM元素
+        const nameInput = document.getElementById('name-input');
+        const submitBtn = document.getElementById('submit-btn');
+        const responseModal = document.getElementById('response-modal');
+        const birthdayModal = document.getElementById('birthday-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const closeModal = document.getElementById('close-modal');
+        const modalOk = document.getElementById('modal-ok');
+        const birthdayInput = document.getElementById('birthday-input');
+        const submitBirthday = document.getElementById('submit-birthday');
+        const closeBirthdayModal = document.getElementById('close-birthday-modal');
+        
+        // 特殊名字列表
+        const uniqueNames = ['sb', 'nc', 'sjb', 'rz', 'fw', 'cnm'];
+        
+        // 处理表单提交
+        submitBtn.addEventListener('click', processName);
+        nameInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                processName();
+            }
+        });
+        
+        // 处理名字的函数
+        function processName() {
+            const input = nameInput.value.trim();
+            const nameRegex = /^[a-zA-Z]{2,4}$/;
+            
+            // 验证输入
+            if (!nameRegex.test(input)) {
+                showModal('输入错误', '不好意思，好像不符合要求、请输入2-4个英文字母');
+                return;
+            }
+            
+            // 转换为小写以简化比较
+            const lowerInput = input.toLowerCase();
+            
+            // 特殊名字处理
+            if (lowerInput === 'yyj') {
+                birthdayInput.value = '';
+                responseModal.classList.remove('active');
+                birthdayModal.classList.add('active');
+                return;
+            }
+            
+            if (lowerInput === 'xyq') {
+                showModal('特别感谢', '谢谢你');
+                return;
+            }
+            
+            if (lowerInput === 'whk') {
+                showModal('问候', '你怎么把我户开了');
+                return;
+            }
+            
+            if (uniqueNames.includes(lowerInput)) {
+                showModal('名字独特', '你名字好独特');
+                return;
+            }
+            
+            showModal('问候', '你好，你一定是个很优秀的人，但跟她相比还是相形见绌些，祝你生活愉快。');
+        }
+        
+        // 生日验证
+        submitBirthday.addEventListener('click', function() {
+            const birthday = birthdayInput.value.trim();
+            const validAnswers = ['8.26', '8月26日', '八月二十六日', '826'];
+            
+            if (validAnswers.includes(birthday)) {
+                birthdayModal.classList.remove('active');
+                showLongMessage();
+            } else {
+                showModal('验证失败', '身份验证未通过');
+            }
+        });
+        
+        // 显示长消息（渐入效果）
+        function showLongMessage() {
+            const message = `我真的无法做到对你死心 我又不是没被人拉黑过 但不知道为什么唯独你能对我产生后劲并且让我很难释怀  我真的不甘如此  当初你断联我  我第一次传话给你说当时不立马找你沟通是我碍于没有维护人际关系环境的必要 这只是我当时爱要面子故作矜持的假话 本质上只是我没法忍受那时候的一切经历 而且我不知道该以什么样的方式和身份去说合适  有些东西真的想直接和你说 可我根本没有机会  那几段日子我整天也只是靠游戏 番剧等娱乐转移注意力 我起初以为自己是能面对了 可实际上只是在逃避问题而已 时间还是证明了这跟其他的不一样  为了得到你的理解我真的愿意 说白了都过了快2个月我还会嘴硬 我怎么可能只会想说这么少的东西 我尽力了 没办法了 自认命不好吧  打打几个字就觉得自己很诚心吗 可现在的状态我除了打字还能干什么呢`;
+            
+            modalTitle.textContent = '特别的话';
+            modalMessage.textContent = message;
+            modalMessage.classList.remove('show');
+            responseModal.classList.add('active');
+            
+            // 使用setTimeout触发渐入动画
+            setTimeout(() => {
+                modalMessage.classList.add('show');
+            }, 50);
+        }
+        
+        // 显示模态窗口
+        function showModal(title, message) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            modalMessage.classList.remove('show');
+            responseModal.classList.add('active');
+            
+            // 使用setTimeout触发渐入动画
+            setTimeout(() => {
+                modalMessage.classList.add('show');
+            }, 50);
+        }
+        
+        // 关闭模态窗口
+        function closeAllModals() {
+            responseModal.classList.remove('active');
+            birthdayModal.classList.remove('active');
+            nameInput.value = '';
+            nameInput.focus();
+        }
+        
+        // 事件监听
+        closeModal.addEventListener('click', closeAllModals);
+        modalOk.addEventListener('click', closeAllModals);
+        closeBirthdayModal.addEventListener('click', closeAllModals);
+        
+        // 点击模态背景关闭
+        responseModal.addEventListener('click', function(e) {
+            if (e.target === responseModal) {
+                closeAllModals();
+            }
+        });
+        
+        birthdayModal.addEventListener('click', function(e) {
+            if (e.target === birthdayModal) {
+                closeAllModals();
+            }
+        });
+    </script>
+</body>
+</html>
